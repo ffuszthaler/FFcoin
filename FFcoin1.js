@@ -37,6 +37,21 @@ class Blockchain {
     newBlock.hash = newBlock.calculateHash();
     this.chain.push(newBlock);
   }
+
+  isChainValid() {
+    for (let i = 1; i < this.chain.length; i++) {
+      const currentBlock = this.chain[i];
+      const previousBlock = this.chain[i - 1];
+
+      if (currentBlock.hash !== currentBlock.calculateHash()) {
+        return false;
+      }
+      if (currentBlock.previousHash !== previousBlock.hash) {
+        return false;
+      }
+    }
+    return true;
+  }
 }
 
 // testing
@@ -47,3 +62,4 @@ FFcoin.addBlock(new Block(2, "24062025", { amount: 9 }));
 FFcoin.addBlock(new Block(3, "24062025", { amount: 13 }));
 
 console.log(JSON.stringify(FFcoin, null, 4));
+console.log("Is my blockchain valid? " + FFcoin.isChainValid());
