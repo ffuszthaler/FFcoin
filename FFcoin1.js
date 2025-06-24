@@ -1,0 +1,49 @@
+const SHA256 = require("crypto-js/sha256");
+
+class Block {
+  constructor(index, timestamp, data, previousHash = "") {
+    this.index = index; // block height, distance from genesis block
+    this.timestamp = timestamp;
+    this.data = data; // transactions
+    this.previousHash = previousHash; // to allow chaining
+    this.hash = this.calculateHash();
+  }
+
+  calculateHash() {
+    return SHA256(
+      this.index +
+        this.timestamp +
+        JSON.stringify(this.data) +
+        this.previousHash
+    ).toString();
+  }
+}
+
+class Blockchain {
+  constructor() {
+    this.chain = [this.createGenesisBlock()];
+  }
+
+  createGenesisBlock() {
+    return new Block(0, "24062025", "Genesis Block", "0"); // first block of chain
+  }
+
+  getLatestBlock() {
+    return this.chain[this.chain.length - 1]; // latest item (block) in chain
+  }
+
+  addBlock(newBlock) {
+    newBlock.previousHash = this.getLatestBlock().hash; // chaining inside the blockchain
+    newBlock.hash = newBlock.calculateHash();
+    this.chain.push(newBlock);
+  }
+}
+
+// testing
+
+let FFcoin = new Blockchain();
+FFcoin.addBlock(new Block(1, "24062025", { amount: 5 }));
+FFcoin.addBlock(new Block(2, "24062025", { amount: 9 }));
+FFcoin.addBlock(new Block(3, "24062025", { amount: 13 }));
+
+console.log(JSON.stringify(FFcoin, null, 4));
