@@ -15,7 +15,8 @@ class Block {
       this.index +
         this.timestamp +
         JSON.stringify(this.data) +
-        this.previousHash
+        this.previousHash +
+        this.nonce
     ).toString();
   }
 
@@ -23,14 +24,17 @@ class Block {
     while (
       this.hash.substring(0, difficulty) !== Array(difficulty + 1).join("0")
     ) {
-      ///
+      this.nonce++; // prevents infinite loop
+      this.hash = this.calculateHash();
     }
+    console.log("BLOCK MINED: " + this.hash);
   }
 }
 
 class Blockchain {
   constructor() {
     this.chain = [this.createGenesisBlock()];
+    this.difficulty = 3;
   }
 
   createGenesisBlock() {
@@ -43,7 +47,7 @@ class Blockchain {
 
   addBlock(newBlock) {
     newBlock.previousHash = this.getLatestBlock().hash; // chaining inside the blockchain
-    newBlock.hash = newBlock.calculateHash();
+    newBlock.mineBlock(this.difficulty);
     this.chain.push(newBlock);
   }
 
@@ -65,17 +69,15 @@ class Blockchain {
 
 // testing
 let FFcoin = new Blockchain();
+
+console.log("Mining Block 1 ...");
 FFcoin.addBlock(new Block(1, "24062025", { amount: 5 }));
+
+console.log("Mining Block 2 ...");
 FFcoin.addBlock(new Block(2, "24062025", { amount: 9 }));
+
+console.log("Mining Block 3 ...");
 FFcoin.addBlock(new Block(3, "24062025", { amount: 13 }));
-
-console.log(JSON.stringify(FFcoin, null, 4));
-console.log("Is my blockchain valid? " + FFcoin.isChainValid());
-
-console.log();
-console.log("HACK! change amount...");
-FFcoin.chain[2].data = { amount: 100 };
-FFcoin.chain[2].hash = FFcoin.chain[2].calculateHash();
 
 console.log(JSON.stringify(FFcoin, null, 4));
 console.log("Is my blockchain valid? " + FFcoin.isChainValid());
