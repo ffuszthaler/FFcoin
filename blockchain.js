@@ -1,10 +1,37 @@
 const SHA256 = require("crypto-js/sha256");
+const EC = require("elliptic").ec;
+const ec = new EC("secp256k1");
 
 class Transaction {
   constructor(fromAddress, toAddress, amount) {
     this.fromAddress = fromAddress;
     this.toAddress = toAddress;
     this.amount = amount;
+  }
+
+  calculateHash() {
+    return SHA256(this.fromAddress + this.toAddress + this.amount).toString();
+  }
+
+  signTransaction(signingKey) {
+    if (signingKey.getPublic("hex") !== this.fromAddress) {
+      throw new Error("ERROR: Cannot sign transactions for other wallets!");
+    }
+    const hashTx = this.calculateHash();
+    const sig = signingKey.sign(hashTx, "base64");
+    this.signature = sig.toDER("hex");
+  }
+
+  isValid() {
+    if (this.fromAddress === null) return true; // reward
+
+    if (!this.signature || this.signature.length === 0) {
+      throw new Error("ERROR: No signature in this transaction!");
+    }
+
+    const publicKey = ec.keyFromPublic(this.fromAddress, "hex");
+    // check if calculateHash is signed by the signature:
+    return publicKey.verify(this.calculateHash(), this.signature);
   }
 }
 
@@ -34,6 +61,15 @@ class Block {
       this.hash = this.calculateHash();
     }
     console.log("BLOCK MINED: " + this.hash);
+  }
+
+  hasValidTransactions() {
+    for (const tx of this.transactions) {
+      if (!tx.isValid()) {
+        return false;
+      }
+    }
+    return true;
   }
 }
 
@@ -69,7 +105,16 @@ class Blockchain {
     ];
   }
 
-  createTransaction(transaction) {
+  addTransaction(transaction) {
+    if (!transaction.fromAddress || !transaction.toAddress) {
+      throw new Error("ERROR: Must include a fromAddress and a toAddress!");
+    }
+
+    if (!transaction.isValid()) {
+      throw new Error(
+        "ERROR: Cannot add an invalid transaction to the mempool!"
+      );
+    }
     this.pendingTransactions.push(transaction);
   }
 
@@ -93,9 +138,14 @@ class Blockchain {
       const currentBlock = this.chain[i];
       const previousBlock = this.chain[i - 1];
 
+      if (!currentBlock.hasValidTransactions()) {
+        return false;
+      }
+
       if (currentBlock.hash !== currentBlock.calculateHash()) {
         return false;
       }
+
       if (currentBlock.previousHash !== previousBlock.hash) {
         return false;
       }
