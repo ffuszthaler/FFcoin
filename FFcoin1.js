@@ -55,11 +55,18 @@ class Blockchain {
 }
 
 // testing
-
 let FFcoin = new Blockchain();
 FFcoin.addBlock(new Block(1, "24062025", { amount: 5 }));
 FFcoin.addBlock(new Block(2, "24062025", { amount: 9 }));
 FFcoin.addBlock(new Block(3, "24062025", { amount: 13 }));
+
+console.log(JSON.stringify(FFcoin, null, 4));
+console.log("Is my blockchain valid? " + FFcoin.isChainValid());
+
+console.log();
+console.log("HACK! change amount...");
+FFcoin.chain[2].data = { amount: 100 };
+FFcoin.chain[2].hash = FFcoin.chain[2].calculateHash();
 
 console.log(JSON.stringify(FFcoin, null, 4));
 console.log("Is my blockchain valid? " + FFcoin.isChainValid());
