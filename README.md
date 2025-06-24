@@ -1,0 +1,3 @@
+# FFcoin
+
+custom blockchain implementation
